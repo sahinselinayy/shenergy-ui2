@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>YTD Learning – Şebeke Yönetim Arayüzü</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  
+  <style>
+    /* --------------------------------------------------------------------------
+       TASARIM SİSTEMİ (CSS)
+       -------------------------------------------------------------------------- */
+    :root {
+      --ener-yellow: #f9a825;
+      --ener-yellow-soft: #f0e41c;
+      --ener-blue: #145da0;
+
+      --bg-main: #020617;
+      --bg-card: #020617;
+      --text: #e5e7eb;
+      --text-muted: #9ca3af;
+      --border: #1f2937;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --shadow-soft: 0 24px 60px rgba(0,0,0,0.8);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      min-height: 100vh;
+      position: relative;
+      color: var(--text);
+      padding: 0; /* Mobilde kenar boşluğu olmasın */
+      display: flex;
+      justify-content: center;
+      align-items: flex-start; /* Mobilde stretch sorun çıkarabilir */
+      background: #020617;
+      overflow-x: hidden;
+    }
+
+    /* Arka plan efekti */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at 15% 10%, rgba(20,93,160,0.35), transparent 60%),
+        radial-gradient(circle at 85% 90%, rgba(249,168,37,0.28), transparent 65%);
+      filter: blur(55px);
+      z-index: -1;
+      opacity: 0.55;
+      pointer-events: none;
+    }
+
+    .app {
+      max-width: 1400px;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      gap: 18px;
+      padding: 24px;
+      height: 100vh;
+    }
+
+    /* ---------------------------------------------------------
+       SIDEBAR & MOBILE MENU
+       --------------------------------------------------------- */
+    .sidebar {
+      background:
+        radial-gradient(circle at top, rgba(20,93,160,0.35), transparent 65%),
+        linear-gradient(145deg, rgba(15,23,42,0.98), rgba(15,23,42,0.92));
+      border-radius: var(--radius-lg);
+      padding: 18px 18px 16px;
+      border: 1px solid rgba(148,163,184,0.35);
+      box-shadow: var(--shadow-soft);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 50;
+      transition: transform 0.3s ease;
+    }
+
+    /* Hamburger Menu Button (Mobile Only) */
+    .mobile-menu-btn {
+        display: none; /* Masaüstünde gizli */
+        position: fixed;
+        top: 15px;
+        left: 15px;
+        z-index: 60;
+        background: rgba(15,23,42,0.9);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 8px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    /* ---------------------------------------------------------
+       RESPONSIVE DÜZENLEMELER
+       --------------------------------------------------------- */
+    @media (max-width: 768px) {
+        .app {
+            grid-template-columns: 1fr; /* Tek sütun */
+            padding: 0;
+            height: auto;
+            display: block;
+        }
+
+        .mobile-menu-btn {
+            display: block; /* Mobilde göster */
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 280px;
+            transform: translateX(-100%); /* Varsayılan gizli */
+        }
+
+        .sidebar.open {
+            transform: translateX(0); /* Açıkken göster */
+        }
+
+        .main {
+            border-radius: 0; /* Mobilde köşeleri sıfırla */
+            border: none;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            padding-left: 60px; /* Menü butonu için boşluk */
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .topbar-right-pill {
+            align-self: flex-end;
+        }
+
+        .kpi-grid {
+            grid-template-columns: 1fr; /* Mobilde alt alta */
+        }
+
+        /* MOBİLDE TABLOYU KART GÖRÜNÜMÜNE ÇEVİRME (ÇOK ÖNEMLİ) */
+        table, thead, tbody, th, td, tr { 
+            display: block; 
+        }
+        
+        thead tr { 
+            position: absolute;
+            top: -9999px;
+            left: -9999px;
+        }
+        
+        tr { 
+            margin-bottom: 15px; 
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: rgba(255,255,255,0.02);
+            padding: 10px;
+        }
+        
+        td { 
+            border: none;
+            border-bottom: 1px solid rgba(255,255,255,0.05); 
+            position: relative;
+            padding-left: 50%; 
+            text-align: right;
+            white-space: normal;
+        }
+        
+        td:before { 
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 45%; 
+            padding-right: 10px; 
+            white-space: nowrap;
+            text-align: left;
+            font-weight: bold;
+            color: var(--text-muted);
+            content: attr(data-label); /* HTML'de data-label attribute'u kullanacağız */
+        }
+
+        .content {
+            padding: 15px;
+        }
+    }
+
+    .logo-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .team-logo {
+      height: 70px;
+      width: auto;
+      object-fit: contain;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.05);
+      padding: 5px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .logo-title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .logo-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .menu-group-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--text-muted);
+      margin: 4px 4px 2px;
+    }
+
+    .menu-btn {
+      background: transparent;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      padding: 9px 12px;
+      color: var(--text-muted);
+      font-size: 14px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      cursor: pointer;
+      margin-top: 4px;
+      transition: 0.18s ease;
+    }
+
+    .menu-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(148,163,184,0.6);
+    }
+
+    .menu-btn span.label {
+      flex: 1;
+      text-align: left;
+    }
+
+    .menu-btn:hover {
+      background: rgba(148,163,184,0.12);
+      border-color: rgba(148,163,184,0.4);
+      color: #e5e7eb;
+    }
+
+    .menu-btn.active {
+      background:
+        radial-gradient(circle at left, rgba(249,168,37,0.4), transparent 65%),
+        linear-gradient(90deg, rgba(20,93,160,0.75), rgba(249,168,37,0.85));
+      border-color: rgba(249,168,37,0.9);
+      color: #0b1020;
+    }
+
+    .menu-btn.active .menu-dot {
+      background: #0b1020;
+    }
+
+    /* MAIN CONTENT */
+    .main {
+      background:
+        radial-gradient(circle at 0% 0%, rgba(20,93,160,0.25), transparent 60%),
+        radial-gradient(circle at 100% 100%, rgba(249,168,37,0.22), transparent 70%),
+        linear-gradient(145deg, rgba(15,23,42,0.98), rgba(15,23,42,0.94));
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(148,163,184,0.4);
+      box-shadow: var(--shadow-soft);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 100%; /* Tam boy */
+    }
+
+    .topbar {
+      padding: 14px 20px;
+      border-bottom: 1px solid rgba(31,41,55,0.85);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      backdrop-filter: blur(20px);
+      background: linear-gradient(
+        90deg,
+        rgba(15,23,42,0.96),
+        rgba(15,23,42,0.9)
+      );
+    }
+
+    .topbar-left {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .top-title {
+      font-size: 18px;
+      font-weight: 650;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .top-pill {
+      font-size: 11px;
+      padding: 2px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.6);
+      color: var(--text-muted);
+    }
+
+    .top-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .topbar-right-pill {
+      font-size: 11px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: linear-gradient(120deg, var(--ener-blue), var(--ener-yellow-soft));
+      color: #020617;
+      font-weight: 600;
+      box-shadow: 0 0 24px rgba(20,93,160,0.6);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .content {
+      padding: 20px 20px 22px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .view { display: none; }
+    .view.active { display: block; animation: fadeIn 0.3s ease; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h2 {
+      font-size: 19px;
+      margin-bottom: 6px;
+      position: relative;
+      padding-left: 14px;
+    }
+
+    h2::before {
+      content: "";
+      width: 6px;
+      height: 22px;
+      background: linear-gradient(180deg, var(--ener-blue), var(--ener-yellow-soft));
+      position: absolute;
+      left: 0;
+      top: 2px;
+      border-radius: 999px;
+    }
+
+    .subtext {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    /* KPI CARDS */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    @media (min-width: 768px) and (max-width: 1024px) {
+        .kpi-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr)); /* Tablette 2'li */
+        }
+    }
+
+    .kpi-card {
+      background:
+        radial-gradient(circle at top left, rgba(20,93,160,0.4), transparent 60%),
+        linear-gradient(145deg, #020617, #020617);
+      padding: 14px 14px 12px;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(31,41,55,0.9);
+      box-shadow:
+        0 16px 36px rgba(0,0,0,0.9),
+        0 0 22px rgba(20,93,160,0.4);
+      transition: 0.18s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 22px 46px rgba(0,0,0,1), 0 0 30px rgba(249,168,37,0.65);
+    }
+
+    .kpi-label {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .kpi-value {
+      font-size: 22px;
+      font-weight: 700;
+      margin-top: 6px;
+    }
+
+    /* TABLE STYLES */
+    .table-wrapper {
+      background: linear-gradient(
+        135deg,
+        rgba(15,23,42,0.98),
+        rgba(15,23,42,0.96)
+      );
+      padding: 12px;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(31,41,55,0.9);
+      margin-top: 22px;
+      overflow-x: auto;
+      box-shadow:
+        0 16px 35px rgba(0,0,0,0.9),
+        0 0 18px rgba(20,93,160,0.35);
+      max-height: 500px;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(55,65,81,0.85);
+      font-size: 13px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    thead th {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #9ca3af;
+      position: sticky;
+      top: 0;
+      background: rgba(15,23,42,0.98);
+      z-index: 10;
+    }
+
+    tbody tr:hover {
+      background: radial-gradient(circle at left, rgba(20,93,160,0.28), transparent 60%);
+    }
+
+    .btn-outline {
+      padding: 5px 12px;
+      font-size: 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(20,93,160,0.9);
+      background: rgba(15,23,42,0.95);
+      color: #dbeafe;
+      cursor: pointer;
+      transition: 0.15s ease;
+    }
+
+    .btn-outline:hover {
+      background: rgba(20,93,160,0.35);
+      color: white;
+    }
+
+    .primary-button {
+        background: linear-gradient(90deg, var(--ener-blue), var(--ener-yellow));
+        border: none;
+        padding: 10px 20px;
+        color: #000;
+        font-weight: bold;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: transform 0.2s;
+        width: 100%; /* Mobilde buton tam genişlik */
+        max-width: 300px;
+    }
+    .primary-button:hover {
+        transform: scale(1.02);
+    }
+
+    /* Risk Badge Colors */
+    .badge-risk {
+        font-size: 10px;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+    .risk-low { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid #22c55e; }
+    .risk-mid { background: rgba(234, 179, 8, 0.2); color: #facc15; border: 1px solid #eab308; }
+    .risk-high { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
+
+    /* Trafo Detay Kartı */
+    .trafo-card {
+      background: rgba(10,15,30,0.80);
+      padding: 16px 16px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(70,80,100,0.35);
+      margin-top: 18px;
+      font-size: 14px;
+      position: relative;
+      overflow: hidden;
+      max-width: 600px;
+    }
+
+    .trafo-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding-bottom: 5px;
+    }
+    
+    .trafo-row:last-child { border-bottom: none; }
+
+    .health-bar {
+      height: 10px;
+      width: 100%;
+      background: rgba(255,255,255,0.1);
+      border-radius: 999px;
+      margin: 15px 0;
+      overflow: hidden;
+    }
+
+    .health-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #ef4444, #eab308, #22c55e); /* Kırmızıdan Yeşile */
+      width: 0%;
+      transition: width 1s ease-out;
+    }
+
+    #opt-result {
+        background: rgba(0,0,0,0.3);
+        padding: 10px;
+        border-radius: 8px;
+        border-left: 4px solid var(--ener-blue);
+        display: none; /* Varsayılan gizli */
+        margin-top: 10px;
+    }
+    
+    /* Mobilde overlay */
+    .overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.7);
+        z-index: 40;
+    }
+    .overlay.active { display: block; }
+
+  </style>
+</head>
+
+
+<body>
+
+<!-- Mobil Menü Butonu -->
+<button class="mobile-menu-btn" id="menu-toggle">
+    ☰ MENÜ
+</button>
+
+<!-- Arka plan karartma (Mobilde menü açılınca) -->
+<div class="overlay" id="overlay"></div>
+
+<div class="app">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="logo-box">
+      <img 
+        src="static/Gemini_Generated_Image_YTD.png" 
+        class="team-logo" 
+        alt="YTD Learning Logo"
+        onerror="this.style.display='none'"
+      >
+      
+      <div>
+        <div class="logo-title">YTD Learning</div>
+        <div class="logo-sub">ML ile Yatırım &amp; Bakım</div>
+      </div>
+    </div>
+
+    <div class="menu-group-label">MENÜ</div>
+    <button class="menu-btn active" data-view="dashboard">
+      <div class="menu-dot"></div>
+      <span class="label">Genel Bakış</span>
+    </button>
+    <button class="menu-btn" data-view="assets">
+      <div class="menu-dot"></div>
+      <span class="label">Varlık Listesi</span>
+    </button>
+    <button class="menu-btn" data-view="detail">
+      <div class="menu-dot"></div>
+      <span class="label">Varlık Profili</span>
+    </button>
+  </aside>
+
+
+  <main class="main">
+
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="top-title">
+          Yatırım & Bakım Karar Destek Sistemi
+          <span class="top-pill">Model Data v1.0</span>
+        </div>
+        <div class="top-subtitle">
+          Gerçek saha verileri üzerinde optimizasyon ve risk analizi.
+        </div>
+      </div>
+      <div class="topbar-right-pill">
+        YÖNETİCİ MODU
+      </div>
+    </header>
+
+
+    <section class="content">
+
+      <!-- DASHBOARD VIEW -->
+      <div id="dashboard" class="view active">
+        <h2>Şebeke Özeti</h2>
+        <p class="subtext">
+          Sahadaki toplam varlıkların güncel sağlık ve risk durumları.
+        </p>
+
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">Toplam Varlık</div>
+            <div class="kpi-value" id="kpi-total">-</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Yüksek Riskli Varlık</div>
+            <div class="kpi-value" id="kpi-high-risk" style="color: #ef4444;">-</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Ortalama Sağlık Endeksi</div>
+            <div class="kpi-value" id="kpi-avg-health">-</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Yatırım Bütçesi (Birim)</div>
+            <div class="kpi-value" id="kpi-budget">-</div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ASSETS LIST VIEW -->
+      <div id="assets" class="view">
+        <h2>Varlık Yönetimi ve Optimizasyon</h2>
+        <p class="subtext">
+          Aşağıdaki listeden varlıkları inceleyebilir veya mevcut bütçe kısıtlarına göre yapay zeka tabanlı yatırım planı oluşturabilirsiniz.
+        </p>
+
+        <div style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px;">
+            <button id="run-optimization-btn" class="primary-button">
+            Optimizasyonu Çalıştır
+            </button>
+            <span id="opt-result"></span>
+        </div>
+
+        <div id="demo-output" style="margin-top:15px; margin-bottom:15px; font-size:13px; color:#e5e7eb; display:none;"></div>
+
+        <div class="table-wrapper">
+          <table id="assets-table">
+            <thead>
+              <tr>
+                <th>Talep No</th>
+                <th>Grup</th>
+                <th>Operasyon</th>
+                <th>SAIDI</th>
+                <th>SAIFI</th>
+                <th>Maliyet</th>
+                <th>Sağlık Skoru</th>
+                <th>Risk</th>
+                <th>İşlem</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- JS ile doldurulacak -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+
+      <!-- DETAIL VIEW -->
+      <div id="detail" class="view">
+        <h2>Varlık Detay Profili</h2>
+        <p class="subtext">
+            Seçilen varlığın teknik parametreleri ve sağlık geçmişi.
+        </p>
+
+        <div class="trafo-card" id="detail-card" style="display:none;">
+          <div class="trafo-row">
+            <div><strong>Talep No:</strong> <span class="d-talep">-</span></div>
+            <div><strong>Grup:</strong> <span class="d-grup">-</span></div>
+          </div>
+          
+          <div class="trafo-row">
+            <div><strong>Operasyon Türü:</strong> <span class="d-tur" style="color:var(--ener-yellow)">-</span></div>
+            <div><strong>Maliyet:</strong> <span class="d-maliyet">-</span> birim</div>
+          </div>
+
+          <div style="margin-top: 15px; margin-bottom: 5px; font-size: 12px; color: #9ca3af;">SAĞLIK ENDEKSİ (0 = Kötü, 100 = İyi)</div>
+          <div class="health-bar">
+            <div class="health-fill"></div>
+          </div>
+          <div style="text-align: right; font-size: 18px; font-weight: bold;" class="d-health-val">-</div>
+
+          <div class="trafo-row" style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+             <div><strong>SAIDI:</strong> <span class="d-saidi">-</span></div>
+             <div><strong>SAIFI:</strong> <span class="d-saifi">-</span></div>
+          </div>
+        </div>
+        
+        <p id="detail-placeholder" style="color: var(--text-muted); margin-top: 20px;">Lütfen listeden bir varlık seçiniz.</p>
+      </div>
+
+    </section>
+  </main>
+</div>
+
+<!-- =======================================================================
+     VERİ VE MANTIK KATMANI (Backend'siz Çalışma İçin)
+     ======================================================================= -->
+<script>
+  // MODEL DATA'DAN ALINAN HAM VERİLER
+  // Gerçek model_data.py dosyasındaki veriler buraya JS objesi olarak taşındı.
+  const rawI = Array.from({length: 456}, (_, i) => i + 1); // 1'den 456'ya kadar index
+
+  // Veri setinin çok uzun olmaması için JS içinde sıkıştırılmış format kullanıyoruz
+  // Gerçek uygulamada bu veriler API'den gelir.
+  
+  // Örneklem Veriler (Hızlı Önizleme İçin Entegre Edildi)
+  const rawData = {
+    // SAIDI, SAIFI, COST (C), HEALTH (A), GROUP (G), TYPE (Y_B), CATEGORY (K)
+    1: { talep: 322, saidi: 0.3318, saifi: 0.3318, c: 13, a: 6235, g: "Trafo", yb: 1, k: 1 },
+    2: { talep: 500, saidi: 0.8630, saifi: 0.8630, c: 46, a: 4520, g: "Kesici", yb: 0, k: 0 },
+    3: { talep: 656, saidi: 0.0666, saifi: 0.0666, c: 59, a: 6055, g: "Kesici", yb: 1, k: 0 },
+    4: { talep: 945, saidi: 0.0666, saifi: 0.0666, c: 53, a: 3025, g: "Kesici", yb: 1, k: 0 },
+    5: { talep: 1599, saidi: 0.5377, saifi: 0.5377, c: 76, a: 5260, g: "Kesici", yb: 1, k: 0 },
+    6: { talep: 2241, saidi: 0.8630, saifi: 0.8630, c: 52, a: 4500, g: "Trafo", yb: 0, k: 0 },
+    7: { talep: 2682, saidi: 0.3318, saifi: 0.3318, c: 47, a: 3415, g: "Kablo", yb: 1, k: 0 },
+    8: { talep: 4747, saidi: 0.5377, saifi: 0.5377, c: 57, a: 5585, g: "Kablo", yb: 1, k: 0 },
+    10: { talep: 4824, saidi: 0.3318, saifi: 0.3318, c: 79, a: 5435, g: "Trafo", yb: 1, k: 0 },
+    15: { talep: 6656, saidi: 0.2484, saifi: 0.2484, c: 86, a: 6260, g: "Kesici", yb: 0, k: 1 },
+    35: { talep: 1, saidi: 0.00004, saifi: 0.00004, c: 16, a: 1110, g: "Kablo", yb: 1, k: 0 },
+    45: { talep: 24, saidi: 0.2917, saifi: 0.2917, c: 63, a: 4565, g: "Trafo", yb: 0, k: 0 },
+    109: { talep: 205, saidi: 0.6868, saifi: 0.6868, c: 62, a: 4485, g: "Trafo", yb: 1, k: 1 },
+    280: { talep: 904, saidi: 0.3566, saifi: 0.3566, c: 83, a: 6020, g: "Trafo", yb: 0, k: 0 },
+    380: { talep: 1160, saidi: 0.6080, saifi: 0.6080, c: 49, a: 3525, g: "Kablo", yb: 1, k: 0 },
+    449: { talep: 10784, saidi: 0.7127, saifi: 0.7127, c: 85, a: 6210, g: "Kablo", yb: 1, k: 0 },
+    220: { talep: 716, saidi: 0.4673, saifi: 0.4673, c: 48, a: 3515, g: "Trafo", yb: 0, k: 0 },
+    126: { talep: 277, saidi: 0.5082, saifi: 0.5082, c: 70, a: 5108, g: "Kesici", yb: 1, k: 0 },
+    128: { talep: 283, saidi: 0.6249, saifi: 0.6249, c: 44, a: 3165, g: "Trafo", yb: 0, k: 0 },
+    272: { talep: 868, saidi: 0.2097, saifi: 0.2097, c: 45, a: 3250, g: "Kesici", yb: 1, k: 0 }
+  };
+
+  // Parametreler
+  const BUDGET = 90;
+  const weights = { w1: 0.2, w2: 0.2, w3: 0.2, w4: 0.4 };
+
+  // Veri İşleme (Assets Array Oluşturma)
+  const assetsData = Object.keys(rawData).map(key => {
+    const d = rawData[key];
+    const id = parseInt(key);
+    
+    const health_ui = Math.min(Math.round((d.a / 7000) * 100), 100);
+
+    let risk_label = "Düşük";
+    if (health_ui < 50) risk_label = "Yüksek";
+    else if (health_ui < 75) risk_label = "Orta";
+
+    return {
+        id: id,
+        talep_no: d.talep,
+        saidi: d.saidi,
+        saifi: d.saifi,
+        cost: d.c,
+        group: d.g,
+        category_public: d.k === 1,
+        raw_health: d.a,
+        health_ui: health_ui,
+        risk_label: risk_label,
+        operation_type: d.yb === 1 ? "Yatırım" : "Bakım"
+    };
+  });
+
+  // KPI Hesaplama
+  const total_assets = assetsData.length;
+  const high_risk_count = assetsData.filter(a => a.risk_label === "Yüksek").length;
+  const avg_health = total_assets > 0 
+      ? (assetsData.reduce((sum, a) => sum + a.health_ui, 0) / total_assets).toFixed(1) 
+      : 0;
+
+  document.getElementById("kpi-total").textContent = total_assets;
+  document.getElementById("kpi-high-risk").textContent = high_risk_count;
+  document.getElementById("kpi-avg-health").textContent = avg_health + " / 100";
+  document.getElementById("kpi-budget").textContent = BUDGET;
+
+</script>
+
+<script>
+  // ---------------------------------------------------------
+  // 1. Navigation & Mobile Menu Logic
+  // ---------------------------------------------------------
+  const sidebar = document.getElementById("sidebar");
+  const menuBtn = document.getElementById("menu-toggle");
+  const overlay = document.getElementById("overlay");
+
+  // Menüyü Aç/Kapa
+  function toggleMenu() {
+      sidebar.classList.toggle("open");
+      overlay.classList.toggle("active");
+  }
+
+  menuBtn.onclick = toggleMenu;
+  overlay.onclick = toggleMenu;
+
+  document.querySelectorAll(".menu-btn").forEach(btn => {
+    btn.onclick = () => {
+      // Menüyü güncelle
+      document.querySelectorAll(".menu-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      // Sayfayı değiştir
+      document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+      document.getElementById(btn.dataset.view).classList.add("active");
+
+      // Mobildeysek menüyü kapat
+      if(window.innerWidth < 768) {
+          toggleMenu();
+      }
+    };
+  });
+
+  // ---------------------------------------------------------
+  // 2. Table Rendering (Mobile Responsive Data-Labels)
+  // ---------------------------------------------------------
+  const tableBody = document.querySelector("#assets-table tbody");
+  
+  function renderTable(data) {
+      tableBody.innerHTML = "";
+      data.forEach(asset => {
+          const tr = document.createElement("tr");
+          
+          let riskClass = "risk-low";
+          if (asset.risk_label === "Orta") riskClass = "risk-mid";
+          if (asset.risk_label === "Yüksek") riskClass = "risk-high";
+
+          // 'data-label' attribute'ları CSS ile mobilde başlık olarak kullanılır
+          tr.innerHTML = `
+            <td data-label="Talep No">${asset.talep_no}</td>
+            <td data-label="Grup">${asset.group}</td>
+            <td data-label="Operasyon">${asset.operation_type}</td>
+            <td data-label="SAIDI">${asset.saidi.toFixed(4)}</td>
+            <td data-label="SAIFI">${asset.saifi.toFixed(4)}</td>
+            <td data-label="Maliyet">${asset.cost}</td>
+            <td data-label="Sağlık Skoru"><strong>${asset.health_ui}</strong></td>
+            <td data-label="Risk"><span class="badge-risk ${riskClass}">${asset.risk_label}</span></td>
+            <td data-label="İşlem"><button class="btn-outline" onclick="showDetail(${asset.id})">İncele</button></td>
+          `;
+          tableBody.appendChild(tr);
+      });
+  }
+
+  renderTable(assetsData);
+
+  // ---------------------------------------------------------
+  // 3. Detail View Logic
+  // ---------------------------------------------------------
+  window.showDetail = function(id) {
+      const asset = assetsData.find(a => a.id === id);
+      if(!asset) return;
+
+      document.querySelector(".d-talep").textContent = asset.talep_no;
+      document.querySelector(".d-grup").textContent = asset.group;
+      document.querySelector(".d-tur").textContent = asset.operation_type;
+      document.querySelector(".d-maliyet").textContent = asset.cost;
+      document.querySelector(".d-health-val").textContent = asset.health_ui;
+      document.querySelector(".d-saidi").textContent = asset.saidi.toFixed(5);
+      document.querySelector(".d-saifi").textContent = asset.saifi.toFixed(5);
+      
+      document.querySelector(".health-fill").style.width = asset.health_ui + "%";
+      
+      document.getElementById("detail-card").style.display = "block";
+      document.getElementById("detail-placeholder").style.display = "none";
+
+      document.querySelectorAll(".menu-btn").forEach(b => b.classList.remove("active"));
+      document.querySelector('[data-view="detail"]').classList.add("active");
+      
+      document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+      document.getElementById("detail").classList.add("active");
+  }
+
+  // ---------------------------------------------------------
+  // 4. Optimization Logic
+  // ---------------------------------------------------------
+  document.getElementById("run-optimization-btn").onclick = () => {
+      const resultSpan = document.getElementById("opt-result");
+      const outputDiv = document.getElementById("demo-output");
+      
+      resultSpan.style.display = "block";
+      resultSpan.textContent = "Hesaplanıyor...";
+      resultSpan.style.color = "#fbbf24";
+      outputDiv.style.display = "none";
+
+      setTimeout(() => {
+          try {
+              const maxSaidi = Math.max(...assetsData.map(a => a.saidi)) || 1;
+              const maxSaifi = Math.max(...assetsData.map(a => a.saifi)) || 1;
+
+              const scoredAssets = assetsData.map(a => {
+                  const normSaidi = a.saidi / maxSaidi;
+                  const normSaifi = a.saifi / maxSaifi;
+                  const normHealthRisk = (100 - a.health_ui) / 100.0;
+
+                  const score = (weights.w1 * normSaidi) + 
+                                (weights.w2 * normSaifi) + 
+                                (weights.w4 * normHealthRisk);
+                  
+                  return { ...a, score: score };
+              });
+
+              scoredAssets.sort((a, b) => {
+                  const ratioA = a.score / Math.max(a.cost, 0.1);
+                  const ratioB = b.score / Math.max(b.cost, 0.1);
+                  return ratioB - ratioA;
+              });
+
+              let usedBudget = 0;
+              let totalObjective = 0;
+              const selected = [];
+
+              for (const asset of scoredAssets) {
+                  if (usedBudget + asset.cost <= BUDGET) {
+                      selected.push(asset);
+                      usedBudget += asset.cost;
+                      totalObjective += asset.score;
+                  }
+              }
+
+              resultSpan.textContent = `Tamamlandı! Amaç Değeri: ${totalObjective.toFixed(4)}`;
+              resultSpan.style.color = "#4ade80";
+
+              let html = `
+                <div style="background: rgba(20,93,160,0.2); padding: 15px; border-radius: 8px; border: 1px solid var(--ener-blue);">
+                    <h3 style="margin-bottom:10px; color: var(--ener-yellow);">Optimizasyon Sonucu</h3>
+                    <p>Mevcut Bütçe: <strong>${BUDGET}</strong></p>
+                    <p>Kullanılan Bütçe: <strong>${usedBudget}</strong></p>
+                    <p>Seçilen Varlık Sayısı: <strong>${selected.length}</strong></p>
+                    <hr style="border-color: rgba(255,255,255,0.1); margin: 10px 0;">
+                    <p style="font-size:12px; margin-bottom:5px; color:#9ca3af;">ÖNCELİKLİ YATIRIM LİSTESİ:</p>
+                    <ul style="padding-left: 20px; font-size: 13px;">
+              `;
+
+              selected.forEach(item => {
+                  html += `<li><strong>Talep ${item.talep_no}</strong> (${item.group}) - Maliyet: ${item.cost} - Skor: ${item.score.toFixed(3)}</li>`;
+              });
+
+              if (selected.length === 0) {
+                  html += `<li>Bütçe yetersiz veya uygun aday bulunamadı.</li>`;
+              }
+
+              html += `</ul></div>`;
+              outputDiv.innerHTML = html;
+              outputDiv.style.display = "block";
+
+          } catch (err) {
+              console.error(err);
+              resultSpan.textContent = "Hesaplama Hatası!";
+              resultSpan.style.color = "#ef4444";
+          }
+      }, 500);
+  };
+</script>
+</body>
+</html>
