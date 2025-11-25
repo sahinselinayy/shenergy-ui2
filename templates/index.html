@@ -31,15 +31,14 @@
       min-height: 100vh;
       position: relative;
       color: var(--text);
-      padding: 0; /* Mobilde kenar boşluğu olmasın */
+      padding: 0;
       display: flex;
       justify-content: center;
-      align-items: flex-start; /* Mobilde stretch sorun çıkarabilir */
+      align-items: flex-start;
       background: #020617;
       overflow-x: hidden;
     }
 
-    /* Arka plan efekti */
     body::before {
       content: "";
       position: fixed;
@@ -81,34 +80,35 @@
       transition: transform 0.3s ease;
     }
 
-    /* Hamburger Menu Button (Mobile Only) */
     .mobile-menu-btn {
-        display: none; /* Masaüstünde gizli */
+        display: none;
         position: fixed;
         top: 15px;
         left: 15px;
         z-index: 60;
-        background: rgba(15,23,42,0.9);
-        border: 1px solid var(--border);
-        color: var(--text);
+        background: rgba(15,23,42,0.95);
+        border: 1px solid var(--ener-yellow);
+        color: var(--ener-yellow);
         padding: 8px 12px;
         border-radius: 8px;
         cursor: pointer;
+        font-weight: bold;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     }
 
     /* ---------------------------------------------------------
-       RESPONSIVE DÜZENLEMELER
+       RESPONSIVE DÜZENLEMELER (DÜZELTİLDİ)
        --------------------------------------------------------- */
     @media (max-width: 768px) {
         .app {
-            grid-template-columns: 1fr; /* Tek sütun */
+            grid-template-columns: 1fr;
             padding: 0;
             height: auto;
             display: block;
         }
 
         .mobile-menu-btn {
-            display: block; /* Mobilde göster */
+            display: block;
         }
 
         .sidebar {
@@ -117,35 +117,33 @@
             left: 0;
             height: 100%;
             width: 280px;
-            transform: translateX(-100%); /* Varsayılan gizli */
+            transform: translateX(-100%);
         }
 
         .sidebar.open {
-            transform: translateX(0); /* Açıkken göster */
+            transform: translateX(0);
         }
 
         .main {
-            border-radius: 0; /* Mobilde köşeleri sıfırla */
+            border-radius: 0;
             border: none;
             min-height: 100vh;
+            padding-top: 60px; /* Üst bar için boşluk */
         }
 
         .topbar {
-            padding-left: 60px; /* Menü butonu için boşluk */
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 10px;
+            display: none; /* Mobilde üst barı sadeleştirelim veya gizleyelim */
         }
-        
-        .topbar-right-pill {
-            align-self: flex-end;
+
+        .content {
+            padding: 15px;
         }
 
         .kpi-grid {
-            grid-template-columns: 1fr; /* Mobilde alt alta */
+            grid-template-columns: 1fr;
         }
 
-        /* MOBİLDE TABLOYU KART GÖRÜNÜMÜNE ÇEVİRME (ÇOK ÖNEMLİ) */
+        /* TABLO DÜZELTMESİ - FLEXBOX YAPISI */
         table, thead, tbody, th, td, tr { 
             display: block; 
         }
@@ -157,37 +155,51 @@
         }
         
         tr { 
-            margin-bottom: 15px; 
+            margin-bottom: 20px; 
             border: 1px solid var(--border);
-            border-radius: 12px;
-            background: rgba(255,255,255,0.02);
-            padding: 10px;
+            border-radius: 16px;
+            background: linear-gradient(145deg, rgba(15,23,42,0.9), rgba(10,15,30,0.95));
+            padding: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
         
         td { 
+            /* Flexbox ile yan yana dizilim */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            
             border: none;
-            border-bottom: 1px solid rgba(255,255,255,0.05); 
+            border-bottom: 1px solid rgba(255,255,255,0.08); 
             position: relative;
-            padding-left: 50%; 
+            padding: 10px 0;
             text-align: right;
-            white-space: normal;
-        }
-        
-        td:before { 
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            width: 45%; 
-            padding-right: 10px; 
-            white-space: nowrap;
-            text-align: left;
-            font-weight: bold;
-            color: var(--text-muted);
-            content: attr(data-label); /* HTML'de data-label attribute'u kullanacağız */
+            min-height: 40px;
         }
 
-        .content {
-            padding: 15px;
+        td:last-child {
+            border-bottom: none;
+            justify-content: flex-end; /* Butonu sağa yasla */
+            padding-top: 15px;
+        }
+        
+        /* Sol taraftaki Başlık (Label) */
+        td:before { 
+            content: attr(data-label); 
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.05em;
+            text-align: left;
+            margin-right: 15px;
+            /* Sabit genişlik yerine esnek yapı */
+            flex-shrink: 0; 
+        }
+        
+        /* Sağ taraftaki Veri */
+        td > * {
+            text-align: right;
         }
     }
 
@@ -274,7 +286,6 @@
       background: #0b1020;
     }
 
-    /* MAIN CONTENT */
     .main {
       background:
         radial-gradient(circle at 0% 0%, rgba(20,93,160,0.25), transparent 60%),
@@ -286,7 +297,7 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      height: 100%; /* Tam boy */
+      height: 100%;
     }
 
     .topbar {
@@ -380,7 +391,6 @@
       margin-bottom: 16px;
     }
 
-    /* KPI CARDS */
     .kpi-grid {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -389,7 +399,7 @@
 
     @media (min-width: 768px) and (max-width: 1024px) {
         .kpi-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr)); /* Tablette 2'li */
+            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
     }
 
@@ -424,7 +434,6 @@
       margin-top: 6px;
     }
 
-    /* TABLE STYLES */
     .table-wrapper {
       background: linear-gradient(
         135deg,
@@ -491,14 +500,13 @@
         border-radius: 8px;
         cursor: pointer;
         transition: transform 0.2s;
-        width: 100%; /* Mobilde buton tam genişlik */
+        width: 100%;
         max-width: 300px;
     }
     .primary-button:hover {
         transform: scale(1.02);
     }
 
-    /* Risk Badge Colors */
     .badge-risk {
         font-size: 10px;
         padding: 2px 8px;
@@ -510,7 +518,6 @@
     .risk-mid { background: rgba(234, 179, 8, 0.2); color: #facc15; border: 1px solid #eab308; }
     .risk-high { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
 
-    /* Trafo Detay Kartı */
     .trafo-card {
       background: rgba(10,15,30,0.80);
       padding: 16px 16px 14px;
@@ -544,7 +551,7 @@
 
     .health-fill {
       height: 100%;
-      background: linear-gradient(90deg, #ef4444, #eab308, #22c55e); /* Kırmızıdan Yeşile */
+      background: linear-gradient(90deg, #ef4444, #eab308, #22c55e);
       width: 0%;
       transition: width 1s ease-out;
     }
@@ -554,11 +561,10 @@
         padding: 10px;
         border-radius: 8px;
         border-left: 4px solid var(--ener-blue);
-        display: none; /* Varsayılan gizli */
+        display: none;
         margin-top: 10px;
     }
     
-    /* Mobilde overlay */
     .overlay {
         display: none;
         position: fixed;
@@ -579,7 +585,7 @@
     ☰ MENÜ
 </button>
 
-<!-- Arka plan karartma (Mobilde menü açılınca) -->
+<!-- Arka plan karartma -->
 <div class="overlay" id="overlay"></div>
 
 <div class="app">
@@ -740,19 +746,11 @@
 </div>
 
 <!-- =======================================================================
-     VERİ VE MANTIK KATMANI (Backend'siz Çalışma İçin)
+     VERİ VE MANTIK KATMANI
      ======================================================================= -->
 <script>
-  // MODEL DATA'DAN ALINAN HAM VERİLER
-  // Gerçek model_data.py dosyasındaki veriler buraya JS objesi olarak taşındı.
-  const rawI = Array.from({length: 456}, (_, i) => i + 1); // 1'den 456'ya kadar index
-
-  // Veri setinin çok uzun olmaması için JS içinde sıkıştırılmış format kullanıyoruz
-  // Gerçek uygulamada bu veriler API'den gelir.
-  
-  // Örneklem Veriler (Hızlı Önizleme İçin Entegre Edildi)
+  // MODEL DATA'DAN ALINAN HAM VERİLER (Örnek Set)
   const rawData = {
-    // SAIDI, SAIFI, COST (C), HEALTH (A), GROUP (G), TYPE (Y_B), CATEGORY (K)
     1: { talep: 322, saidi: 0.3318, saifi: 0.3318, c: 13, a: 6235, g: "Trafo", yb: 1, k: 1 },
     2: { talep: 500, saidi: 0.8630, saifi: 0.8630, c: 46, a: 4520, g: "Kesici", yb: 0, k: 0 },
     3: { talep: 656, saidi: 0.0666, saifi: 0.0666, c: 59, a: 6055, g: "Kesici", yb: 1, k: 0 },
@@ -779,13 +777,11 @@
   const BUDGET = 90;
   const weights = { w1: 0.2, w2: 0.2, w3: 0.2, w4: 0.4 };
 
-  // Veri İşleme (Assets Array Oluşturma)
+  // Veri İşleme
   const assetsData = Object.keys(rawData).map(key => {
     const d = rawData[key];
     const id = parseInt(key);
-    
     const health_ui = Math.min(Math.round((d.a / 7000) * 100), 100);
-
     let risk_label = "Düşük";
     if (health_ui < 50) risk_label = "Yüksek";
     else if (health_ui < 75) risk_label = "Orta";
@@ -821,13 +817,12 @@
 
 <script>
   // ---------------------------------------------------------
-  // 1. Navigation & Mobile Menu Logic
+  // INTERACTION LOGIC
   // ---------------------------------------------------------
   const sidebar = document.getElementById("sidebar");
   const menuBtn = document.getElementById("menu-toggle");
   const overlay = document.getElementById("overlay");
 
-  // Menüyü Aç/Kapa
   function toggleMenu() {
       sidebar.classList.toggle("open");
       overlay.classList.toggle("active");
@@ -838,24 +833,17 @@
 
   document.querySelectorAll(".menu-btn").forEach(btn => {
     btn.onclick = () => {
-      // Menüyü güncelle
       document.querySelectorAll(".menu-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
-
-      // Sayfayı değiştir
       document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
       document.getElementById(btn.dataset.view).classList.add("active");
-
-      // Mobildeysek menüyü kapat
       if(window.innerWidth < 768) {
           toggleMenu();
       }
     };
   });
 
-  // ---------------------------------------------------------
-  // 2. Table Rendering (Mobile Responsive Data-Labels)
-  // ---------------------------------------------------------
+  // Table Rendering
   const tableBody = document.querySelector("#assets-table tbody");
   
   function renderTable(data) {
@@ -867,7 +855,6 @@
           if (asset.risk_label === "Orta") riskClass = "risk-mid";
           if (asset.risk_label === "Yüksek") riskClass = "risk-high";
 
-          // 'data-label' attribute'ları CSS ile mobilde başlık olarak kullanılır
           tr.innerHTML = `
             <td data-label="Talep No">${asset.talep_no}</td>
             <td data-label="Grup">${asset.group}</td>
@@ -885,9 +872,7 @@
 
   renderTable(assetsData);
 
-  // ---------------------------------------------------------
-  // 3. Detail View Logic
-  // ---------------------------------------------------------
+  // Detail Logic
   window.showDetail = function(id) {
       const asset = assetsData.find(a => a.id === id);
       if(!asset) return;
@@ -899,22 +884,26 @@
       document.querySelector(".d-health-val").textContent = asset.health_ui;
       document.querySelector(".d-saidi").textContent = asset.saidi.toFixed(5);
       document.querySelector(".d-saifi").textContent = asset.saifi.toFixed(5);
-      
       document.querySelector(".health-fill").style.width = asset.health_ui + "%";
-      
       document.getElementById("detail-card").style.display = "block";
       document.getElementById("detail-placeholder").style.display = "none";
 
-      document.querySelectorAll(".menu-btn").forEach(b => b.classList.remove("active"));
-      document.querySelector('[data-view="detail"]').classList.add("active");
-      
-      document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
-      document.getElementById("detail").classList.add("active");
+      // Mobilde detay açılınca oraya kaydır
+      if(window.innerWidth < 768) {
+          document.querySelectorAll(".menu-btn").forEach(b => b.classList.remove("active"));
+          document.querySelector('[data-view="detail"]').classList.add("active");
+          document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+          document.getElementById("detail").classList.add("active");
+          window.scrollTo(0,0);
+      } else {
+          document.querySelectorAll(".menu-btn").forEach(b => b.classList.remove("active"));
+          document.querySelector('[data-view="detail"]').classList.add("active");
+          document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+          document.getElementById("detail").classList.add("active");
+      }
   }
 
-  // ---------------------------------------------------------
-  // 4. Optimization Logic
-  // ---------------------------------------------------------
+  // Optimization Logic
   document.getElementById("run-optimization-btn").onclick = () => {
       const resultSpan = document.getElementById("opt-result");
       const outputDiv = document.getElementById("demo-output");
@@ -933,11 +922,7 @@
                   const normSaidi = a.saidi / maxSaidi;
                   const normSaifi = a.saifi / maxSaifi;
                   const normHealthRisk = (100 - a.health_ui) / 100.0;
-
-                  const score = (weights.w1 * normSaidi) + 
-                                (weights.w2 * normSaifi) + 
-                                (weights.w4 * normHealthRisk);
-                  
+                  const score = (weights.w1 * normSaidi) + (weights.w2 * normSaifi) + (weights.w4 * normHealthRisk);
                   return { ...a, score: score };
               });
 
